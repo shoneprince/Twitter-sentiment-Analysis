@@ -16,15 +16,11 @@
 
 ## 📌 Table of Contents
 
+- [Web Application](#-web-application)
 - [Overview](#-overview)
 - [Features](#-features)
 - [Project Structure](#-project-structure)
-- [ML Pipeline](#-ml-pipeline)
-- [Model Architecture](#-model-architecture)
-- [Text Preprocessing](#-text-preprocessing)
-- [Web Application](#-web-application)
 - [Installation & Setup](#-installation--setup)
-- [Deployment on Render](#-deployment-on-render)
 - [Tech Stack](#-tech-stack)
 
 ---

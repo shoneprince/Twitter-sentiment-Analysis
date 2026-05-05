@@ -28,6 +28,7 @@
 ## 🚀 Live Web Application
 
 The predictive model is deployed as an interactive web application using Streamlit.
+
 Try it live here: https://twitter-sentiment-analysis-app-duib.onrender.com/
 
 ## 🔍 Overview

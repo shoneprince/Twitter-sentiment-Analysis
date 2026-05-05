@@ -29,6 +29,11 @@
 
 ---
 
+## 🚀 Live Web Application
+
+The predictive model is deployed as an interactive web application using Streamlit.
+Try it live here: https://twitter-sentiment-analysis-app-duib.onrender.com/
+
 ## 🔍 Overview
 
 This project builds a complete machine learning pipeline — from raw tweet data to a live web application — for real-time Twitter sentiment classification. The model is trained on labeled tweet data and learns to detect the emotional tone of any text input.
@@ -72,148 +77,6 @@ Twitter-sentiment-Analysis/
 └── README.md
 ```
 
----
-
-## ⚙️ ML Pipeline
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      TRAINING PIPELINE                          │
-│                                                                 │
-│  Twitter_Data.csv                                               │
-│       │                                                         │
-│       ▼                                                         │
-│  ┌──────────┐    ┌──────────────┐    ┌─────────────────────┐   │
-│  │  Load &  │───►│  Clean Text  │───►│  Label Encode       │   │
-│  │  Filter  │    │  (regex)     │    │  (Positive/Neg/Neu) │   │
-│  └──────────┘    └──────────────┘    └─────────────────────┘   │
-│                                               │                 │
-│                                               ▼                 │
-│  ┌──────────────┐    ┌─────────────┐   ┌──────────────────┐   │
-│  │  Train BiGRU │◄───│  Pad Seqs   │◄──│  Tokenize Text   │   │
-│  │  Model       │    │  (len=50)   │   │  (vocab=10,000)  │   │
-│  └──────────────┘    └─────────────┘   └──────────────────┘   │
-│         │                                                       │
-│         ▼                                                       │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  Save: model.h5 │ tokenizer.pkl │ label_encoder.pkl     │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Training Configuration:**
-
-| Parameter | Value |
-|---|---|
-| Epochs | 5 |
-| Batch Size | 128 |
-| Validation Split | 20% |
-| Optimizer | Adam (lr = 0.001) |
-| Loss Function | Sparse Categorical Crossentropy |
-| Train/Test Split | 80% / 20% |
-
----
-
-## 🏗️ Model Architecture
-
-```
-Input Sequence (length = 50)
-         │
-         ▼
-┌─────────────────────────────┐
-│   Embedding Layer           │
-│   input_dim  = 10,000       │
-│   output_dim = 128          │
-│   input_length = 50         │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│   Bidirectional GRU         │
-│   units = 128               │
-│   ◄─── forward + backward ──►│
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│   Dropout  (rate = 0.5)     │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│   Dense Layer               │
-│   units = 64, ReLU          │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│   Dropout  (rate = 0.3)     │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│   Output Dense Layer        │
-│   units = 3, Softmax        │
-│   [Positive, Negative, Neutral]│
-└─────────────────────────────┘
-```
-
-**Why Bidirectional GRU?**
-A standard GRU reads text left-to-right, potentially missing context from later words. A **Bidirectional GRU** processes the sequence in **both directions**, giving the model a richer understanding of each word's context — especially important for sarcasm and negations in tweets (e.g., *"not bad at all"*).
-
----
-
-## 🧹 Text Preprocessing
-
-Every tweet goes through the same cleaning pipeline before being fed to the model:
-
-```python
-def clean_text(text):
-    text = text.lower()                        # Lowercase
-    text = re.sub(r"http\S+", "", text)        # Remove URLs
-    text = re.sub(r"@\w+", "", text)           # Remove @mentions
-    text = re.sub(r"#\w+", "", text)           # Remove #hashtags
-    text = re.sub(r"[^\w\s]", "", text)        # Remove punctuation
-    text = re.sub(r"\d+", "", text)            # Remove digits
-    return text
-```
-
-**Example:**
-
-| Raw Tweet | After Cleaning |
-|---|---|
-| `@user Great day! 😍 #happy https://t.co/xyz` | `great day` |
-| `I hate Mondays... #mood 😤` | `i hate mondays mood` |
-
----
-
-## 🌐 Web Application
-
-The Streamlit app (`Twitter_data_app.py`) provides a clean, interactive UI for real-time sentiment prediction.
-
-**How it works:**
-
-```
-User types a tweet
-       │
-       ▼
-  clean_text()          ← same pipeline as training
-       │
-       ▼
-  tokenizer.texts_to_sequences()
-       │
-       ▼
-  pad_sequences(maxlen=50)
-       │
-       ▼
-  model.predict()        ← Bidirectional GRU inference
-       │
-       ▼
-  label_encoder.inverse_transform()
-       │
-       ▼
-  Display: Label + Confidence Score + Emoji
-```
 
 **App Features:**
 - 📝 Text area input for any tweet or sentence
@@ -235,7 +98,7 @@ cd Twitter-sentiment-Analysis
 
 ### 2. Set up Python environment
 ```bash
-# Requires Python 3.11
+# Python 3.11
 python -m venv venv
 source venv/bin/activate       # On Windows: venv\Scripts\activate
 ```
@@ -245,24 +108,12 @@ source venv/bin/activate       # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Train the model *(optional — pre-trained files included)*
-```bash
-python Twitter_data_main.py
-```
-
-### 5. Run the web app
+### 4. Run the web app
 ```bash
 streamlit run Twitter_data_app.py
 ```
 
 ---
-
-## 🚀 Deployment on Render
-
-### Start Command
-```bash
-streamlit run Twitter_data_app.py --server.port $PORT --server.address 0.0.0.0
-```
 
 ### Python Version
 Pin Python to **3.11** by adding a `.python-version` file to the repo root:

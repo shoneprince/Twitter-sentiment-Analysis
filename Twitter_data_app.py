@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import re
 import pickle
 from tensorflow.keras.models import load_model
@@ -51,6 +52,16 @@ def clean_text(text):
 # ===============================
 
 max_len = 50
+TEXT_COLUMN_CANDIDATES = ("text", "tweet", "content", "message", "body")
+
+
+def find_text_column(dataframe):
+    normalized_columns = {column.strip().lower(): column for column in dataframe.columns}
+    for candidate in TEXT_COLUMN_CANDIDATES:
+        if candidate in normalized_columns:
+            return normalized_columns[candidate]
+    return None
+
 
 def predict_sentiment(text):
     text = clean_text(text)
@@ -87,6 +98,49 @@ if st.button("Predict Sentiment"):
             st.markdown("😡 This looks like a Negative tweet!")
         else:
             st.markdown("😐 This looks like a Neutral tweet!")
+
+st.markdown("---")
+st.subheader("Batch Predict From CSV")
+uploaded_file = st.file_uploader(
+    "Upload a CSV with a text, tweet, content, message, or body column",
+    type=["csv"],
+)
+
+if uploaded_file is not None:
+    try:
+        uploaded_df = pd.read_csv(uploaded_file)
+    except pd.errors.EmptyDataError:
+        st.warning("The uploaded CSV is empty.")
+    except pd.errors.ParserError:
+        st.warning("The uploaded CSV could not be parsed.")
+    else:
+        text_column = find_text_column(uploaded_df)
+        if text_column is None:
+            st.warning("Add a text, tweet, content, message, or body column.")
+        else:
+            rows = uploaded_df.copy()
+            rows[text_column] = rows[text_column].fillna("").astype(str)
+            valid_rows = rows[rows[text_column].str.strip() != ""].copy()
+
+            if valid_rows.empty:
+                st.warning("No non-empty text rows found in the CSV.")
+            else:
+                labels = []
+                confidences = []
+                for text in valid_rows[text_column]:
+                    label, confidence = predict_sentiment(text)
+                    labels.append(label)
+                    confidences.append(round(float(confidence), 4))
+
+                valid_rows["predicted_sentiment"] = labels
+                valid_rows["confidence"] = confidences
+                st.dataframe(valid_rows, use_container_width=True)
+                st.download_button(
+                    "Download Predictions",
+                    valid_rows.to_csv(index=False).encode("utf-8"),
+                    file_name="sentiment_predictions.csv",
+                    mime="text/csv",
+                )
 
 st.markdown("---")
 st.caption("Built using Bidirectional GRU + GloVe Embeddings")
